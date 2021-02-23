@@ -3,21 +3,15 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 import pylab
+from scipy import stats
+
+# change directory to folder location
+os.chdir("C://Users/Rachel/Documents/Rachel/BS MS Research/Larval_DR/experiments")
 
 def make_graph(exp):
-    # change directory to folder location
-    os.chdir("C://Users/Rachel/Documents/Rachel/BS MS Research/Larval_DR/experiments")
-    
-    try:
-        # read in the data and setup information
-        data = pd.read_excel(exp + "_data.xlsx")
-        setup = pd.read_excel(exp + "_setup.xlsx")
-    except:
-        # reminder of the argument type allowed
-        print("Function argument must be a string like this:")
-        print("'exp_1'")
-        print("'pilot_1'")
-        return None
+    # read in the data and setup information
+    data = pd.read_excel(exp + "_data.xlsx")
+    setup = pd.read_excel(exp + "_setup.xlsx")    
     
     # data manipulation
     conc = []
@@ -53,8 +47,60 @@ def make_graph(exp):
     for col in data.columns:
         if col != "time" and not np.all(data[col]==0):
             plt.plot(times, data[col], marker=".", ms=8, color=colors[col-1], mfc="0.0", mec="0.0",
-                     label=str(np.round(conc[col-1], decimals=3)))
+                     label=str(col) + " \u2192 " + str(np.round(conc[col-1], decimals=3)))
     plt.xlabel("Hour of Data Collection")
     plt.ylabel("Fraction of Worms Molting")
     plt.title(main)
     plt.legend(title=chr(956) + "L E. coli / worm", bbox_to_anchor=(1,1))
+    
+def stats_test(exp_list=["exp_1"]):
+    for exp in exp_list:
+        # read in the data
+        data = pd.read_excel(exp + "_data.xlsx")
+        setup = pd.read_excel(exp + "_setup.xlsx")
+        
+        # create distribution of times based on data
+        times = [i.hour + (i.minute/60) for i in data["time"]]
+        times = np.array(times) - times[0]
+        groups = [col for col in data.columns if col != "time"and not np.all(data[col]==0)]
+        time_dist = [np.repeat(times,data[i]) for i in groups]    
+    
+        # data manipulation
+        conc = []
+        for i in groups:
+            # find the total number of worms per well
+            total = max([int(setup[setup["well_num"]==i]["worm_num"]), max(data[i])])
+            # find the amount of E. coli per worm
+            conc.append(int(setup[setup["well_num"]==i]["e_coli"])/total)    
+    
+        # run a pairwise t-test between all groups
+        pairs = np.array([[x,y] for i,x in enumerate(groups) for j,y in enumerate(groups) if i < j])
+        for pair in pairs:
+            # find the correct index
+            a = np.where(groups==pair[0])[0][0]
+            b = np.where(groups==pair[1])[0][0]
+            if len(time_dist[a]) > 1 and len(time_dist[b]) > 1:
+                test = stats.ttest_ind(time_dist[a], time_dist[b])[1]
+                # plot the differences in groups if significant
+                if test < 0.05:
+                    # find the slope
+                    x = conc[b] - conc[a]
+                    y = np.mean(time_dist[b]) - np.mean(time_dist[a])
+                    # choose colors based on which quadrant the point is in
+                    if x > 0 and y < 0:
+                        plt.plot(x, y, "o", color="green")
+                    elif x < 0 and y > 0:
+                        plt.plot(x, y, "o", color="green")
+                    elif x > 0 and y > 0:
+                        plt.plot(x, y, "o", color="red")
+                    elif x < 0 and y < 0:
+                        plt.plot(x, y, "o", color="red")
+                    else:
+                        plt.plot(x, y, "o", color="orange")
+    
+    # configurations for the rest of the plot
+    plt.axvline(x=0, color="black")
+    plt.axhline(y=0, color="black")
+    plt.xlabel("Difference in Concentrations per Worm")
+    plt.ylabel("Difference in Average Molting Times")
+    plt.title("Statistically Significant Groups")
