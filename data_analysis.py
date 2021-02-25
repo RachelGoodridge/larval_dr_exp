@@ -53,7 +53,7 @@ def make_graph(exp):
     plt.title(main)
     plt.legend(title=chr(956) + "L E. coli / worm", bbox_to_anchor=(1,1))
     
-def stats_test(exp_list=["exp_1"]):
+def stats_test(exp_list=["exp_1", "exp_4"]):
     for exp in exp_list:
         # read in the data
         data = pd.read_excel(exp + "_data.xlsx")
