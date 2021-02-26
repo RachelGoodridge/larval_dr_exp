@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.lines as mlines
 import os
 import numpy as np
 import pylab
@@ -54,6 +55,11 @@ def make_graph(exp):
     plt.legend(title=chr(956) + "L E. coli / worm", bbox_to_anchor=(1,1))
     
 def stats_test(exp_list=["exp_1", "exp_4"]):
+    # keep track of how many points are in each quadrant
+    green_count = 0
+    red_count = 0
+    orange_count = 0
+    # loop through all the valid experiments
     for exp in exp_list:
         # read in the data
         data = pd.read_excel(exp + "_data.xlsx")
@@ -89,14 +95,19 @@ def stats_test(exp_list=["exp_1", "exp_4"]):
                     # choose colors based on which quadrant the point is in
                     if x > 0 and y < 0:
                         plt.plot(x, y, "o", color="green")
+                        green_count += 1
                     elif x < 0 and y > 0:
                         plt.plot(x, y, "o", color="green")
+                        green_count += 1
                     elif x > 0 and y > 0:
                         plt.plot(x, y, "o", color="red")
+                        red_count += 1
                     elif x < 0 and y < 0:
                         plt.plot(x, y, "o", color="red")
+                        red_count += 1
                     else:
                         plt.plot(x, y, "o", color="orange")
+                        orange_count += 1
     
     # configurations for the rest of the plot
     plt.axvline(x=0, color="black")
@@ -104,3 +115,11 @@ def stats_test(exp_list=["exp_1", "exp_4"]):
     plt.xlabel("Difference in Concentrations per Worm")
     plt.ylabel("Difference in Average Molting Times")
     plt.title("Statistically Significant Groups")
+    green_points = mlines.Line2D([], [], color="green", marker="o", linestyle="None",
+                                 markersize=10, label="green - " + str(green_count))
+    red_points = mlines.Line2D([], [], color="red", marker="o", linestyle="None",
+                               markersize=10, label="red - " + str(red_count))
+    orange_points = mlines.Line2D([], [], color="orange", marker="o", linestyle="None",
+                                  markersize=10, label="orange - " + str(orange_count))
+    plt.legend(handles=[green_points, red_points, orange_points], loc="best")
+    
