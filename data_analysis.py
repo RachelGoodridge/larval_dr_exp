@@ -12,21 +12,26 @@ os.chdir("C://Users/Rachel/Documents/Rachel/BS MS Research/Larval_DR/experiments
 def make_graph(exp):
     # read in the data and setup information
     data = pd.read_excel(exp + "_data.xlsx")
-    setup = pd.read_excel(exp + "_setup.xlsx")    
+    setup = pd.read_excel(exp + "_setup.xlsx")  
+    groups = [col for col in data.columns if col != "time"and not np.all(data[col]==0)]
     
     # data manipulation
     conc = []
-    for col in data.columns:
-        if col != "time":
-            # find the total number of worms per well
-            total = max([int(setup[setup["well_num"]==col]["worm_num"]), max(data[col])])
-            if total != 0:
-                # divide glowing worms by total number of worms
-                data[col] = data[col]/total
-                # find the amount of E. coli per worm
-                conc.append(int(setup[setup["well_num"]==col]["e_coli"])/total)
-            else:
-                conc.append(0)
+    for i in groups:
+        # find the total number of worms per well
+        total = max([int(setup[setup["well_num"]==i]["worm_num"]), max(data[i])])
+        # find the amount of E. coli per worm
+        conc.append(int(setup[setup["well_num"]==i]["e_coli"])/total)
+        # find the fraction of worms molting
+        data[i] = data[i]/total
+    
+    # find and remove any outliers
+    Q3 = np.percentile(np.array(conc), 75)
+    Q1 = np.percentile(np.array(conc), 25)
+    high = Q3 + 1.5*(Q3 - Q1)
+    low = Q1 - 1.5*(Q3 - Q1)
+    groups = np.array(groups)[~((conc > high) | (conc < low))]
+    conc = np.array(conc)[~((conc > high) | (conc < low))]
     
     # convert time to hours and subtract the first value
     times = [i.hour + (i.minute/60) for i in data["time"]]
@@ -36,7 +41,7 @@ def make_graph(exp):
     main = exp.split("_")
     if main[0] == "exp":
         main = "Experiment " + main[1]
-    if main[0] == "pilot":
+    elif main[0] == "pilot":
         main = "Pilot Experiment " + main[1]
     
     # determine the color of each line using a colormap theme
@@ -45,10 +50,9 @@ def make_graph(exp):
     colors = [cm(1.*i) for i in colors]
     
     # plot the lines on top of the same figure
-    for col in data.columns:
-        if col != "time" and not np.all(data[col]==0):
-            plt.plot(times, data[col], marker=".", ms=8, color=colors[col-1], mfc="0.0", mec="0.0",
-                     label=str(col) + " \u2192 " + str(np.round(conc[col-1], decimals=3)))
+    for i,j in zip(groups, range(len(groups))):
+        plt.plot(times, data[i], marker=".", ms=8, color=colors[j], mfc="0.0", mec="0.0",
+                 label=str(i) + " \u2192 " + str(np.round(conc[j], decimals=3)))
     plt.xlabel("Hour of Data Collection")
     plt.ylabel("Fraction of Worms Molting")
     plt.title(main)
@@ -64,21 +68,29 @@ def stats_test(exp_list=["exp_1", "exp_4"]):
         # read in the data
         data = pd.read_excel(exp + "_data.xlsx")
         setup = pd.read_excel(exp + "_setup.xlsx")
-        
-        # create distribution of times based on data
-        times = [i.hour + (i.minute/60) for i in data["time"]]
-        times = np.array(times) - times[0]
         groups = [col for col in data.columns if col != "time"and not np.all(data[col]==0)]
-        time_dist = [np.repeat(times,data[i]) for i in groups]    
-    
+        
         # data manipulation
         conc = []
         for i in groups:
             # find the total number of worms per well
             total = max([int(setup[setup["well_num"]==i]["worm_num"]), max(data[i])])
             # find the amount of E. coli per worm
-            conc.append(int(setup[setup["well_num"]==i]["e_coli"])/total)    
-    
+            conc.append(int(setup[setup["well_num"]==i]["e_coli"])/total)        
+        
+        # find and remove any outliers
+        Q3 = np.percentile(np.array(conc), 75)
+        Q1 = np.percentile(np.array(conc), 25)
+        high = Q3 + 1.5*(Q3 - Q1)
+        low = Q1 - 1.5*(Q3 - Q1)
+        groups = np.array(groups)[~((conc > high) | (conc < low))]
+        conc = np.array(conc)[~((conc > high) | (conc < low))]
+        
+        # create distribution of times based on data
+        times = [i.hour + (i.minute/60) for i in data["time"]]
+        times = np.array(times) - times[0]
+        time_dist = [np.repeat(times,data[i]) for i in groups]    
+        
         # run a pairwise t-test between all groups
         pairs = np.array([[x,y] for i,x in enumerate(groups) for j,y in enumerate(groups) if i < j])
         for pair in pairs:
@@ -86,9 +98,8 @@ def stats_test(exp_list=["exp_1", "exp_4"]):
             a = np.where(groups==pair[0])[0][0]
             b = np.where(groups==pair[1])[0][0]
             if len(time_dist[a]) > 1 and len(time_dist[b]) > 1:
-                test = stats.ttest_ind(time_dist[a], time_dist[b])[1]
                 # plot the differences in groups if significant
-                if test < 0.05:
+                if stats.ttest_ind(time_dist[a], time_dist[b])[1] < 0.05:
                     # find the slope
                     x = conc[b] - conc[a]
                     y = np.mean(time_dist[b]) - np.mean(time_dist[a])
