@@ -12,7 +12,7 @@ os.chdir("C://Users/Rachel/Documents/Rachel/BS MS Research/Larval_DR/experiments
 def make_graph(exp):
     # read in the data and setup information
     data = pd.read_excel(exp + "_data.xlsx")
-    setup = pd.read_excel(exp + "_setup.xlsx")  
+    setup = pd.read_excel(exp + "_setup.xlsx")
     groups = [col for col in data.columns if col != "time"and not np.all(data[col]==0)]
     
     # data manipulation
@@ -25,7 +25,7 @@ def make_graph(exp):
         # find the fraction of worms molting
         data[i] = data[i]/total
     
-    # find and remove any outliers
+    # find and remove any outliers based on concentration
     Q3 = np.percentile(np.array(conc), 75)
     Q1 = np.percentile(np.array(conc), 25)
     high = Q3 + 1.5*(Q3 - Q1)
@@ -78,7 +78,7 @@ def stats_test(exp_list=["exp_1", "exp_4"]):
             # find the amount of E. coli per worm
             conc.append(int(setup[setup["well_num"]==i]["e_coli"])/total)        
         
-        # find and remove any outliers
+        # find and remove any outliers based on concentration
         Q3 = np.percentile(np.array(conc), 75)
         Q1 = np.percentile(np.array(conc), 25)
         high = Q3 + 1.5*(Q3 - Q1)
@@ -89,7 +89,7 @@ def stats_test(exp_list=["exp_1", "exp_4"]):
         # create distribution of times based on data
         times = [i.hour + (i.minute/60) for i in data["time"]]
         times = np.array(times) - times[0]
-        time_dist = [np.repeat(times,data[i]) for i in groups]    
+        time_dist = [np.repeat(times,data[i]) for i in groups]
         
         # run a pairwise t-test between all groups
         pairs = np.array([[x,y] for i,x in enumerate(groups) for j,y in enumerate(groups) if i < j])
