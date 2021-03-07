@@ -58,7 +58,7 @@ def make_graph(exp):
     plt.title(main)
     plt.legend(title=chr(956) + "L E. coli / worm", bbox_to_anchor=(1,1))
     
-def stats_test(exp_list=["exp_1", "exp_4"]):
+def stats_test(exp_list=["exp_1", "exp_4"], write=False):
     # keep track of how many points are in each quadrant
     green_count = 0
     red_count = 0
@@ -104,28 +104,29 @@ def stats_test(exp_list=["exp_1", "exp_4"]):
                     x = conc[b] - conc[a]
                     y = np.mean(time_dist[b]) - np.mean(time_dist[a])
                     # choose colors based on which quadrant the point is in
-                    if x > 0 and y < 0:
+                    if (x > 0 and y < 0) or (x < 0 and y > 0):
                         plt.plot(x, y, "o", color="green")
                         green_count += 1
-                    elif x < 0 and y > 0:
-                        plt.plot(x, y, "o", color="green")
-                        green_count += 1
-                    elif x > 0 and y > 0:
-                        plt.plot(x, y, "o", color="red")
-                        red_count += 1
-                    elif x < 0 and y < 0:
+                    elif (x > 0 and y > 0) or (x < 0 and y < 0):
                         plt.plot(x, y, "o", color="red")
                         red_count += 1
                     else:
                         plt.plot(x, y, "o", color="orange")
                         orange_count += 1
+                    if write:
+                        plt.text(x, y, str(pair))
+    
+    # create the title of the plot based on the experiments used
+    main = "Statistically Significant Groups -"
+    for exp in exp_list:
+        main += " Exp " + exp.split("_")[1]
     
     # configurations for the rest of the plot
     plt.axvline(x=0, color="black")
     plt.axhline(y=0, color="black")
     plt.xlabel("Difference in Concentrations per Worm")
     plt.ylabel("Difference in Average Molting Times")
-    plt.title("Statistically Significant Groups")
+    plt.title(main)
     green_points = mlines.Line2D([], [], color="green", marker="o", linestyle="None",
                                  markersize=10, label="green - " + str(green_count))
     red_points = mlines.Line2D([], [], color="red", marker="o", linestyle="None",
