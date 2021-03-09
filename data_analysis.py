@@ -63,9 +63,10 @@ def stats_test(exp_list=["exp_1", "exp_4"], write=False):
     green_count = 0
     red_count = 0
     orange_count = 0
+    
     # loop through all the valid experiments
     for exp in exp_list:
-        # read in the data
+        # read in the data and setup information
         data = pd.read_excel(exp + "_data.xlsx")
         setup = pd.read_excel(exp + "_setup.xlsx")
         groups = [col for col in data.columns if col != "time"and not np.all(data[col]==0)]
