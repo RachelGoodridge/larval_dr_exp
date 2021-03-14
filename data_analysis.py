@@ -58,11 +58,13 @@ def make_graph(exp):
     plt.title(main)
     plt.legend(title=chr(956) + "L E. coli / worm", bbox_to_anchor=(1,1))
     
-def stats_test(exp_list=["exp_1", "exp_4"], write=False):
+def stats_test(exp_list=["exp_1", "exp_4", "exp_6"], write=False):
     # keep track of how many points are in each quadrant
     green_count = 0
     red_count = 0
     orange_count = 0
+    xs = []
+    ys = []
     
     # loop through all the valid experiments
     for exp in exp_list:
@@ -101,14 +103,16 @@ def stats_test(exp_list=["exp_1", "exp_4"], write=False):
             if len(time_dist[a]) > 1 and len(time_dist[b]) > 1:
                 # plot the differences in groups if significant
                 if stats.ttest_ind(time_dist[a], time_dist[b])[1] < 0.05:
-                    # find the slope
+                    # find the slope and append coordinates to a list
                     x = conc[b] - conc[a]
+                    xs.append(x)
                     y = np.mean(time_dist[b]) - np.mean(time_dist[a])
+                    ys.append(y)
                     # choose colors based on which quadrant the point is in
-                    if (x > 0 and y < 0) or (x < 0 and y > 0):
+                    if x > 0 and y < 0:
                         plt.plot(x, y, "o", color="green")
                         green_count += 1
-                    elif (x > 0 and y > 0) or (x < 0 and y < 0):
+                    elif x > 0 and y > 0:
                         plt.plot(x, y, "o", color="red")
                         red_count += 1
                     else:
@@ -120,10 +124,16 @@ def stats_test(exp_list=["exp_1", "exp_4"], write=False):
     # create the title of the plot based on the experiments used
     main = "Statistically Significant Groups -"
     for exp in exp_list:
-        main += " Exp " + exp.split("_")[1]
+        if exp.split("_")[0] == "exp":
+            main += " Exp " + exp.split("_")[1]
+        elif exp.split("_")[0] == "pilot":
+            main += " Pilot Exp " + exp.split("_")[1]
+    
+    # find and plot the line of best fit
+    m, b = np.polyfit(np.array(xs), np.array(ys), 1)
+    plt.plot(np.array(xs), m*np.array(xs) + b, color="blue")
     
     # configurations for the rest of the plot
-    plt.axvline(x=0, color="black")
     plt.axhline(y=0, color="black")
     plt.xlabel("Difference in Concentrations per Worm")
     plt.ylabel("Difference in Average Molting Times")
@@ -132,7 +142,10 @@ def stats_test(exp_list=["exp_1", "exp_4"], write=False):
                                  markersize=10, label="green - " + str(green_count))
     red_points = mlines.Line2D([], [], color="red", marker="o", linestyle="None",
                                markersize=10, label="red - " + str(red_count))
-    orange_points = mlines.Line2D([], [], color="orange", marker="o", linestyle="None",
-                                  markersize=10, label="orange - " + str(orange_count))
-    plt.legend(handles=[green_points, red_points, orange_points], loc="best")
+    if orange_count != 0:
+        orange_points = mlines.Line2D([], [], color="orange", marker="o", linestyle="None",
+                                      markersize=10, label="orange - " + str(orange_count))
+        plt.legend(handles=[green_points, red_points, orange_points], bbox_to_anchor=(1,1))
+    else:
+        plt.legend(handles=[green_points, red_points], bbox_to_anchor=(1,1))
     
