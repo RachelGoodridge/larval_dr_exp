@@ -7,7 +7,7 @@ import pylab
 from scipy import stats
 
 # change directory to folder location
-os.chdir("C://Users/Rachel/Documents/Rachel/BS MS Research/Larval_DR/experiments")
+os.chdir("D://Larval_DR/experiments")
 
 def make_graph(exp):
     # read in the data and setup information
