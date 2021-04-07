@@ -46,7 +46,8 @@ def make_graph(exp):
     
     # determine the color of each line using a colormap theme
     cm = pylab.get_cmap("winter")
-    colors = np.array(conc)/max(conc)
+    colors = np.array(conc) - min(conc)
+    colors = colors/max(colors)
     colors = [cm(1.*i) for i in colors]
     
     # plot the lines on top of the same figure
