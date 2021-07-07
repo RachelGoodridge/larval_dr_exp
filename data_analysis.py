@@ -140,12 +140,12 @@ def stats_test(exp_list=["exp_1", "exp_4", "exp_6"], write=False):
     plt.ylabel("Difference in Average Molting Times")
     plt.title(main)
     green_points = mlines.Line2D([], [], color="green", marker="o", linestyle="None",
-                                 markersize=10, label="green - " + str(green_count))
+                                 markersize=10, label="negative - " + str(green_count))
     red_points = mlines.Line2D([], [], color="red", marker="o", linestyle="None",
-                               markersize=10, label="red - " + str(red_count))
+                               markersize=10, label="positive - " + str(red_count))
     if orange_count != 0:
         orange_points = mlines.Line2D([], [], color="orange", marker="o", linestyle="None",
-                                      markersize=10, label="orange - " + str(orange_count))
+                                      markersize=10, label="neutral - " + str(orange_count))
         plt.legend(handles=[green_points, red_points, orange_points], bbox_to_anchor=(1,1))
     else:
         plt.legend(handles=[green_points, red_points], bbox_to_anchor=(1,1))
