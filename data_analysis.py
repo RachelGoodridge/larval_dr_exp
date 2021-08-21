@@ -1,3 +1,14 @@
+# Data in Excel
+# data must be stored in a file called "exp_4_data.xlsx" for example for experiment #4
+# this excel spreadsheet should contain columns called "time" and the well labels
+# at each time data was collected record the time (e.g. 9:30am) and the number of worms glowing in that well
+
+# Setup in Excel
+# setup information for the experiment must be stored in a file called "exp_4_setup.xlsx" for example
+# this excel spreadsheet should contain columns called "well_num" which lists the same well labels as above,
+# the column called "worm_num" that is the total number of worms in each well,
+# and the column called "e_coli" that is the E. coli concentration in each well
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
@@ -6,14 +17,22 @@ import numpy as np
 import pylab
 from scipy import stats
 
-# change directory to folder location
+# change directory to folder location where experimental data and setup data are stored
 os.chdir("D://Larval_DR/experiments")
 
 def make_graph(exp):
+    """ Create a graph that plots the fractions of each well glowing (i.e. worms molting) over time.
+    The colors of each line are based on the concentration of E. coli per worm in each well.
+
+    Parameters
+    ----------
+    exp : string (e.g. "exp_4" for experiment #4)
+        The first part of the file names for the data and setup information for that particular experiment.
+    """
     # read in the data and setup information
     data = pd.read_excel(exp + "_data.xlsx")
     setup = pd.read_excel(exp + "_setup.xlsx")
-    groups = [col for col in data.columns if col != "time"and not np.all(data[col]==0)]
+    groups = [col for col in data.columns if col != "time" and not np.all(data[col]==0)]
     
     # data manipulation
     conc = []
@@ -60,6 +79,18 @@ def make_graph(exp):
     plt.legend(title=chr(956) + "L E. coli / worm", bbox_to_anchor=(1,1))
     
 def stats_test(exp_list=["exp_1", "exp_4", "exp_6"], write=False):
+    """ Plot points showing only statistically significant differences between experimental groups.
+    Compare between wells within each experiment, but not across experiments.
+    Points are colored and counted based on the quadrant of the graph in which they are located.
+
+    Parameters
+    ----------
+    exp_list : a list of strings
+        Lists the experiments on which to run statistical tests for differences between groups.
+    write : a boolean
+        If True, each point on the graph will be labeled with the group numbers it represents.
+        If False, the points will appear on the graph without labels.
+    """
     # keep track of how many points are in each quadrant
     green_count = 0
     red_count = 0
